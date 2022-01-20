@@ -1,4 +1,6 @@
+from q1and2_code import tokenize_and_tag
 import collections
+
 class my_corpus():
     def __init__(self, corpus):
         super().__init__() 
@@ -22,7 +24,9 @@ class my_corpus():
     def encode_as_ints(self, sequence):
         
         int_represent = []
+        
         for word in sequence:
+            #if encounter tokens not in vocabulary, add word to it
           if word not in self.word2int:
             self.word2int[word] = self.n_word
             self.int2word[self.n_word] = word
@@ -43,9 +47,14 @@ class my_corpus():
         print('as a text sequence.')
         
         return(text)
-
+    
 def main():
-    corpus = my_corpus(None)
+    corpus_path = "source_text.txt"
+    tokens_line = tokenize_and_tag(corpus_path)
+    tokens_corpus = []
+    for line in tokens_line:
+        tokens_corpus.extend(line)
+    corpus = my_corpus(tokens_corpus)
     
     text = input('Please enter a test sequence to encode and recover: ')
     print(' ')
