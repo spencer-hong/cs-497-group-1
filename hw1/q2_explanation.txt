@@ -1,0 +1,29 @@
+We used regex to match all of the possible numbers to reasonable tags. We first looked for very obvious patterns, such as ISBN numbers and DOI numbers. We use a regex pattern that matches ISBN-10 and ISBN-13 as well as DOI numbers from scientific literature. Any numbers found in these patterns were tagged as <other>.
+
+Then, we checked for any numbers that fall under the “month date, year” form. The examples that fall under this pattern are: Oct 22, 1992, Oct. 22, 1992, Oct 22 1992, or Oct. 22 1992. We then also check for regex patterns that match mm/dd/yyyy patterns. After assessing the source text, we thought it would be reasonably to allow any of these patterns that go from 1600 and onwards. We next check for patterns that fall under dd/mm/yyyy, dd-mm-yyyy, or dd.mm.yyyy, again handling logical rules such as 1-31 days, 1-12 months, and 1600 - onwards using regex. 
+
+Next, we check for patterns that are “day month” such as 2 July or 2 Jul. in the source text. Afterwards, we checked for patterns that are “month, year” such as July, 1999, Jul. 1999, or July 1999. Note that we did this check after the “day month” check as there are possible patterns such as “day month year” which can be captured in this order. After catching these patterns, we check for partterns that have “month date”, which would have been candidates that fell through the initial check “month date, year” which was our third pattern. 
+
+Now that we’ve caught most if not all of the possible month-day-year combinations, we now look for valid standalone years to tag. After assessing the source text, we thought it would be reasonable to look for any years that were 1800 and onwards to be tagged as <years>. We then looked for decimals, which were written as regex patterns that must contain digits on both sides of a decimal with no spaces. Lastly, we tokenized the text after regex pattern matching and assessed if there were any tokens that consisted solely of digits to be <integer>. If the tokens were consisted of some characters and some digits, then it was tagged as <other>. 
+
+In summary, we’ve caught the following patterns. Note that “Month” refers to the spelled out or abbreviation of month names while “mm” refers to the digitized month:
+	⁃	ISBN-10 numbers
+	⁃	ISBN-13 numbers
+	⁃	DOI numbers
+	⁃	mm/dd/yyyy
+	⁃	Month, yyyy
+	⁃	Month yyyy
+	⁃	Month. yyyy
+	⁃	Month, dd
+	⁃	Month. dd
+	⁃	dd Month
+	⁃	dd-mm-yyyy
+	⁃	dd/mm/yyyy
+	⁃	dd.mm.yyyy
+	⁃	Month. dd, yyyy
+	⁃	Month dd, yyyy
+	⁃	Month. dd yyyy
+	⁃	Month dd yyyy
+	⁃	Valid years from 1800 to 2099
+	⁃	Numbers with endings (e.g. 21st)
+	⁃	Numbers as part of a string (i.e. 69(5): 5-14)
