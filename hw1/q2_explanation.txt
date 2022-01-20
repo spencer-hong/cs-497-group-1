@@ -25,5 +25,6 @@ In summary, we’ve caught the following patterns. Note that “Month” refers 
 	⁃	Month. dd yyyy
 	⁃	Month dd yyyy
 	⁃	Valid years from 1800 to 2099
+	-	Decimals
 	⁃	Numbers with endings (e.g. 21st)
 	⁃	Numbers as part of a string (i.e. 69(5): 5-14)
