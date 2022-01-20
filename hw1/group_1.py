@@ -1,6 +1,6 @@
-from q1and2_code import tokenize_and_tag
 import collections
-
+from nltk.tokenize import word_tokenize
+unseen_token = 0
 class my_corpus():
     def __init__(self, corpus):
         super().__init__() 
@@ -11,26 +11,29 @@ class my_corpus():
         self.word_count = collections.Counter(corpus)
 
         #save word tokens to its corresponding int value and vice versa
-        self.word2int = {}
-        self.int2word = {}
-        self.n_word = 0 #total number of unique word tokens in corpus
+        self.word2int = {'<unseen>':unseen_token}
+        self.int2word = {unseen_token:'<unseen>'}
+        self.n_word = 1 #total number of unique word tokens in corpus
         for i, word in enumerate(self.word_count):
-          self.word2int[word] = i
-          self.int2word[i] = word
-          self.n_word = i + 1
+          self.word2int[word] = i + 1
+          self.int2word[i+1] = word
+          self.n_word = i + 2
 
         print('setting vocabulary according to corpus')
     
     def encode_as_ints(self, sequence):
         
         int_represent = []
+        # if input sentence is a string, we will tokenize it
+        if type(sequence) == str:
+          sequence = word_tokenize(sequence.lower())
         
         for word in sequence:
-            #if encounter tokens not in vocabulary, add word to it
+            #if encounter tokens not in vocabulary, we map it to unseen token
           if word not in self.word2int:
-            self.word2int[word] = self.n_word
-            self.int2word[self.n_word] = word
-          int_represent.append(self.word2int[word])
+            int_represent.append(unseen_token)
+          else:
+            int_represent.append(self.word2int[word])
         print('encode this sequence: %s' % sequence)
         print('as a list of integers.')
         
@@ -40,7 +43,10 @@ class my_corpus():
 
         text = []
         for i in int_represent:
-          text.append(self.int2word[i])
+          if i not in self.int2word:
+            text.append(self.int2word[unseen_token])
+          else:
+            text.append(self.int2word[i])
         text = ' '.join(text)
         
         print('encode this list', int_represent)
@@ -49,10 +55,10 @@ class my_corpus():
         return(text)
     
 def main():
-    corpus_path = "source_text.txt"
-    tokens_line = tokenize_and_tag(corpus_path)
+    corpus_path = "training_set.txt"
     tokens_corpus = []
-    for line in tokens_line:
+    with open(corpus_path, 'r', encoding='utf-8') as f:
+      for line in f:
         tokens_corpus.extend(line)
     corpus = my_corpus(tokens_corpus)
     
