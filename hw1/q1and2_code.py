@@ -1,6 +1,6 @@
 import re
 from nltk.tokenize import word_tokenize
-
+#from pdb import set_trace as bp
 ## function to use is tokenize_and_tag(path)
 ## accepts path, the data path to the source text
 ## returns list of lists, each list being a line in the source text
@@ -119,15 +119,25 @@ def tokenize_and_tag(path):
 	accepts path that contains the source text
 	'''
 	
-	corpus = []
-	with open(path, 'r') as f:
-		for line in f:
-			corpus.append(line.lower())
 
+	iterator = -1
+	passages = []
+	with open(path, 'r', encoding = 'utf-8') as f:
+		for line in f:
+			
+			if '<start_of_passage>' in line:
+				passages.append(line.lower())
+				iterator += 1
+			elif '<end_of_passage>' in line:
+				passages[iterator] = passages[iterator] + line.lower()
+				
+			else:
+				passages[iterator] = passages[iterator] + line.lower()
 	tokenized = []
-	for line in corpus:
-		if len(line.strip()) != 0:
-			moving_result = line
+
+	for passage in passages:
+		if len(passage.strip()) != 0:
+			moving_result = passage
 			checked_for_isbn = len(ISBN_check(moving_result)) == 0
 
 			# checking for ISBN numbers
@@ -430,5 +440,7 @@ def tokenize_and_tag(path):
 	
 	return tokenized
 	
-	
+if __name__ == '__main__':
+	test = tokenize_and_tag('source_text.txt')[:3]
+	#bp()
 	
