@@ -1,0 +1,5 @@
+3. To generate the train, dev, and test sets, first we shuffled the order of the passages in the corpus. 
+This helps ensure that the distribution of the passages is relatively similar across all three data sets.
+In addition, to make sure that the same order of passages would be achieved each time the code is run, a random seed value was specified before shuffling.
+After this, we used numpy.split() to divide the data into three sub-arrays, one containing 80% of the data and the other two containing 10% each. 
+These were written to text files as the train, dev, and test sets. 
