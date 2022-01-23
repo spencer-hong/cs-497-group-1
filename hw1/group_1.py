@@ -55,7 +55,7 @@ class my_corpus():
         return(text)
     
 def main():
-    corpus_path = "training_set.txt"
+    corpus_path = "train.txt" #path to the training set file
     tokens_corpus = []
     with open(corpus_path, 'r', encoding='utf-8') as f:
       for line in f:
