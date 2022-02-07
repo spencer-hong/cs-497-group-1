@@ -14,11 +14,12 @@ class FFNNParams():
     self.hiddn_dim = 100 # an arbitrarily chosen dimension
     self.cpu_count = mp.cpu_count()
     self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    self.batch_size = 20
 
 
 class FFNN(nn.Module):
     def __init__(self, vocab_size, embedding_dim, context_size, hidden_dim):
-        super().__init__()
+        super(FFNN, self).__init__()
         self.context_size = context_size 
         self.embedding_dim = embedding_dim 
         self.hidden_dim = hidden_dim
@@ -44,4 +45,9 @@ class FFNN(nn.Module):
         output_linear2 = torch.tanh(self.linear2(output_hidden))
 
         return F.soft_max(output_linear2, dim = 1)
+def prepare_dataset():
+    raise NotImplementedError
 
+def prepare_loader(dataset, batch_size, num_workers):
+    return torch.utils.data.DataLoader(dataset, batch_size = batch_size, shuffle = True, num_workers = num_workers)
+  
