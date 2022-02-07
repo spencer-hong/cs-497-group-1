@@ -15,6 +15,7 @@ class FFNNParams():
     self.cpu_count = mp.cpu_count()
     self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     self.batch_size = 20
+    self.epochs = 20
 
 
 class FFNN(nn.Module):
@@ -50,4 +51,4 @@ def prepare_dataset():
 
 def prepare_loader(dataset, batch_size, num_workers):
     return torch.utils.data.DataLoader(dataset, batch_size = batch_size, shuffle = True, num_workers = num_workers)
-  
+
