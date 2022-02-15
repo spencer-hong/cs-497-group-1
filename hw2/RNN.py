@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from torchtext.vocab import Vocab
+from torchtext.vocab import build_vocab_from_iterator
 
 class RNN_cell(nn.Module):
   def __init__(self, input_size, hidden_size):
@@ -44,3 +46,16 @@ class RNN(nn.Module):
     Distribution = self.output(init_hidden[1])#take hidden state of last layer
 
     return Distribution
+
+def build_vocab(corpus):
+  """
+  Args:
+    corpus: List[] list of tokens
+  Return:
+    vocab: torchtext.vocab.Vocab
+  """
+  vocab = build_vocab_from_iterator(corpus)
+  #add output vocabulary token, its correxponding value is len(vocab)+1
+  
+  vocab.set_default_index(len(vocab)+1)
+  return vocab
