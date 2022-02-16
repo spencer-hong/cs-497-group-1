@@ -1,4 +1,5 @@
-from torch import nn
+import torch
+from torch import nn, LongTensor
 from torch.utils.data import Dataset
 
 
@@ -7,9 +8,13 @@ def init_weights(m):
 	for p in m.parameters():
 		p = nn.init.uniform_(p, a=-0.1, b=0.1)
 
+def model_to_device(m, device):
+	for p in m.parameters():
+		p = p.to(device)
+
 # data reading utils
 class TextDataset(Dataset):
-	def __init__(self, text_file, model='RNN', batch_size=20, train_dataset=None, sliding_window=30):
+	def __init__(self, text_file, model='RNN', batch_size=20, train_dataset=None, sliding_window=30, debugging=False):
 		self.sliding_window = sliding_window
 		self.batch_size = batch_size
 
@@ -21,6 +26,9 @@ class TextDataset(Dataset):
 		with open(text_file, encoding='utf-8') as f:
 			raw_text = self.preprocess_readlines(f.readlines())
 		self.split_text = self.tokenize_raw(raw_text)
+
+		if debugging:
+			self.split_text = self.split_text[:100]
 		
 		# get vocabulary
 		if train_dataset is None:
@@ -110,3 +118,13 @@ class TextDataset(Dataset):
 
 	def return_token_to_int(self):
 		return self.int_to_token
+
+
+def text_collate_fn(batch):
+	sources = LongTensor([example[0] for example in batch])
+	targets = LongTensor([example[1] for example in batch])
+	return sources, targets
+
+
+def compute_perplexity(loss):
+	return torch.exp(loss)
