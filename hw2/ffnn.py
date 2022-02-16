@@ -5,6 +5,7 @@ import torch.optim as optim
 import multiprocessing as mp
 from datetime import datetime
 import matplotlib.pyplot as plt
+from utils import init_weights
 
 torch.manual_seed(100)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -66,6 +67,7 @@ class FFNN(nn.Module):
         self.linear1 = nn.Linear((self.context_size * self.embedding_dim), self.hidden_dim, bias = False)
         self.hidden = nn.Linear(self.hidden_dim, self.hidden_dim)
         self.linear2 = nn.Linear(self.hidden_dim, self.vocab_size, bias = False)
+        init_weights(self)
         
     def forward(self, inputs):
         # originally (words_input, embedding_dimension), but reshape to (1 x (words_input * embedding_dimension))

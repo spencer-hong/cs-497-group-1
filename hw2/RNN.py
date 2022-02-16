@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torchtext.vocab import Vocab
 from torchtext.vocab import build_vocab_from_iterator
+from utils import init_weights
 
 class RNN_cell(nn.Module):
   def __init__(self, input_size, hidden_size):
@@ -33,6 +34,8 @@ class RNN(nn.Module):
         nn.Linear(hidden_size, vocab_size),
         nn.Softmax()
     )
+    init_weights(self)
+
   def forward(self, sequence, init_hidden):
     """
     Args:
