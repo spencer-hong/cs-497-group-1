@@ -66,6 +66,8 @@ class TextDataset(Dataset):
 	# set/generate methods
 	def generate_vocabulary(self):
 		vocabulary_unique = list(set(self.split_text))
+		if '<oov>' not in vocabulary_unique:
+			vocabulary_unique.append('<oov>')
 		return vocabulary_unique, len(vocabulary_unique)
 
 	def generate_vocabulary_mappings(self):
@@ -116,7 +118,7 @@ class TextDataset(Dataset):
 	def return_token_to_int(self):
 		return self.token_to_int
 
-	def return_token_to_int(self):
+	def return_int_to_token(self):
 		return self.int_to_token
 
 
@@ -127,4 +129,13 @@ def text_collate_fn(batch):
 
 
 def compute_perplexity(loss):
-	return torch.exp(loss)
+	return round(torch.exp(loss).item(), 4)
+
+
+def save_perplexity(ppl_list, output_dir, file_name):
+	if not output_dir.endswith('/'):
+		output_dir += '/'
+	if '.' not in file_name:
+		file_name += '.csv'
+	with open(output_dir + file_name, 'w') as f:
+		f.write('\n'.join(['perplexity'] + [str(val) for val in ppl_list]))

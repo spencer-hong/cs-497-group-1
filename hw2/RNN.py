@@ -45,6 +45,7 @@ class RNN(nn.Module):
                 nn.Softmax()
         )
         init_weights(self)
+        self.output[0].weight = self.embeddings.weight
         self.to(device)
         # model_to_device(self, device)
 

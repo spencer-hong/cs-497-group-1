@@ -11,7 +11,7 @@ from torch.optim import Adam
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import Dataset, DataLoader
 
-from utils import TextDataset, text_collate_fn, compute_perplexity
+from utils import TextDataset, text_collate_fn, compute_perplexity, save_perplexity
 from RNN import RNN
 
 
@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument("--device", type=str, default='cuda:0', help="Device to use for training/eval.")
 
     # logging
-    parser.add_argument("--output_dir", type=str, default=None, help="Where to store logs manually.")
+    parser.add_argument("--output_dir", type=str, default='rnn_sweep', help="Where to store logs manually.")
     parser.add_argument("--log_step_interval", type=int, default=10, help="Log perplexity every _log_step_interval_ training steps.")
     parser.add_argument("--log_to_wandb", action="store_true")
     parser.add_argument("--wandb_project", type=str, default='cs497-hw2')
@@ -46,7 +46,7 @@ def parse_args():
     return args
 
 
-debugging = True
+debugging = False
 def main():
     # housekeeping
     args = parse_args()
@@ -60,16 +60,17 @@ def main():
             tags=[args.wandb_tag],
             config=args
         )
+        wandb.run.name = 'hidden size: ' + str(args.hidden_size) + '; learning rate: ' + str(args.learning_rate)
         
     # load data
     train_dataset = TextDataset(args.train_file, debugging=debugging)
     vocab_size = train_dataset.return_vocabulary_size()
-    # val_dataset = TextDataset(args.validation_file, batch_size=1, train_dataset=train_dataset)
-    # test_dataset = TextDataset(args.test_file, batch_size=1, train_dataset=train_dataset)
+    val_dataset = TextDataset(args.validation_file, batch_size=1, train_dataset=train_dataset, debugging=debugging)
+    test_dataset = TextDataset(args.test_file, batch_size=1, train_dataset=train_dataset, debugging=debugging)
 
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=text_collate_fn)
-    # val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False, collate_fn=text_collate_fn)
-    # test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=text_collate_fn)
+    val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False, collate_fn=text_collate_fn)
+    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=text_collate_fn)
 
     # load model; training-related logistics
     model = RNN(args.hidden_size, vocab_size, device=args.device)
@@ -78,6 +79,19 @@ def main():
 
     # logging initialization
     train_perplexity, val_perplexity, test_perplexity = [], [], []
+
+    def evaluate_model(dataloader):
+        avg_ppl = 0
+        prev_hidden = None
+        for step, (source, target) in enumerate(dataloader):
+            source, target = source.to(args.device), target.to(args.device)
+            outputs = model(source, prev_hidden)
+            probabilities, prev_hidden = outputs['probabilities'], outputs['hidden_state']
+            loss = loss_func(probabilities, target)
+            ppl = compute_perplexity(loss)
+            avg_ppl += ppl
+        avg_ppl /= len(dataloader)
+        return avg_ppl
 
     # progress bar init
     num_train_steps = len(train_dataloader) * args.num_train_epochs
@@ -90,24 +104,38 @@ def main():
             source, target = source.to(args.device), target.to(args.device)
             outputs = model(source, prev_hidden)
             probabilities, prev_hidden = outputs['probabilities'], outputs['hidden_state']
+            
+            # compute loss and perplexity
             loss = loss_func(probabilities, target)
-            ppl = round(compute_perplexity(loss).item(), 4)
+            ppl = compute_perplexity(loss)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
+
+            # progress bar / log
             progress_bar.update(1)
             progress_bar.set_description("Train perplexity: %s" % ppl)
-
             if args.log_to_wandb:
-                wandb.log({"perplexity": ppl})
-
+                wandb.log({"train/perplexity": ppl})
             train_perplexity.append(ppl)
-            input("hi")
-    # TODO: dataloaders
-    
-    # load model
-    
+        
+        model.eval()
+        avg_val_ppl = evaluate_model(val_dataloader)
+        avg_test_ppl = evaluate_model(test_dataloader)
 
+        val_perplexity.append(avg_val_ppl)
+        test_perplexity.append(avg_test_ppl)
+        if args.log_to_wandb:
+            wandb.log({
+                "validation/perplexity": avg_val_ppl,
+                "test/perplexity": avg_test_ppl
+            })
+      
+    if args.output_dir is not None:  
+        save_perplexity(train_perplexity, args.output_dir, 'train')
+        save_perplexity(val_perplexity, args.output_dir, 'val')
+        save_perplexity(test_perplexity, args.output_dir, 'test')
+    print('done!')
 
 
 if __name__ == '__main__':
