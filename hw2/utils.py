@@ -1,16 +1,13 @@
 import torch
 from torch import nn, LongTensor
 from torch.utils.data import Dataset
+from collections import Counter
 
 
 # cross-model utils
 def init_weights(m):
 	for p in m.parameters():
 		p = nn.init.uniform_(p, a=-0.1, b=0.1)
-
-def model_to_device(m, device):
-	for p in m.parameters():
-		p = p.to(device)
 
 # data reading utils
 class TextDataset(Dataset):
@@ -27,9 +24,6 @@ class TextDataset(Dataset):
 			raw_text = self.preprocess_readlines(f.readlines())
 		self.split_text = self.tokenize_raw(raw_text)
 
-		if debugging:
-			self.split_text = self.split_text[:100]
-		
 		# get vocabulary
 		if train_dataset is None:
 			self.vocabulary, self.vocabulary_size = self.generate_vocabulary()
@@ -65,7 +59,7 @@ class TextDataset(Dataset):
 
 	# set/generate methods
 	def generate_vocabulary(self):
-		vocabulary_unique = list(set(self.split_text))
+		vocabulary_unique = list(Counter(self.split_text).keys())
 		if '<oov>' not in vocabulary_unique:
 			vocabulary_unique.append('<oov>')
 		return vocabulary_unique, len(vocabulary_unique)
@@ -94,11 +88,12 @@ class TextDataset(Dataset):
 	def generate_examples_rnn(self):
 		x, y = [], []
 		corpus_length = len(self.encoded_text)
-		for ix in range(0, corpus_length, self.sliding_window):
-			if ix + self.sliding_window + self.batch_size > corpus_length:
+		separation_between_batches = corpus_length // self.sliding_window
+		for ix in range(0, separation_between_batches, self.sliding_window):
+			if ix + self.sliding_window > separation_between_batches:
 				break
 			for jx in range(self.batch_size):
-				start_index = ix + jx
+				start_index = ix + jx * separation_between_batches
 				end_index = start_index + self.sliding_window
 				x.append(self.encoded_text[start_index:end_index])
 				y.append(self.encoded_text[end_index])

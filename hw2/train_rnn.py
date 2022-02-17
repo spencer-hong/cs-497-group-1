@@ -34,6 +34,8 @@ def parse_args():
     # logging
     parser.add_argument("--output_dir", type=str, default='rnn_sweep', help="Where to store logs manually.")
     parser.add_argument("--log_step_interval", type=int, default=10, help="Log perplexity every _log_step_interval_ training steps.")
+    
+    # wandb log is publically available at: 
     parser.add_argument("--log_to_wandb", action="store_true")
     parser.add_argument("--wandb_project", type=str, default='cs497-hw2')
     parser.add_argument("--wandb_tag", type=str, default='RNN')
@@ -46,7 +48,6 @@ def parse_args():
     return args
 
 
-debugging = False
 def main():
     # housekeeping
     args = parse_args()
@@ -63,10 +64,10 @@ def main():
         wandb.run.name = 'hidden size: ' + str(args.hidden_size) + '; learning rate: ' + str(args.learning_rate)
         
     # load data
-    train_dataset = TextDataset(args.train_file, debugging=debugging)
+    train_dataset = TextDataset(args.train_file)
     vocab_size = train_dataset.return_vocabulary_size()
-    val_dataset = TextDataset(args.validation_file, batch_size=1, train_dataset=train_dataset, debugging=debugging)
-    test_dataset = TextDataset(args.test_file, batch_size=1, train_dataset=train_dataset, debugging=debugging)
+    val_dataset = TextDataset(args.validation_file, batch_size=1, train_dataset=train_dataset)
+    test_dataset = TextDataset(args.test_file, batch_size=1, train_dataset=train_dataset)
 
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=text_collate_fn)
     val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False, collate_fn=text_collate_fn)
@@ -97,6 +98,7 @@ def main():
     num_train_steps = len(train_dataloader) * args.num_train_epochs
     progress_bar = tqdm(range(num_train_steps))
 
+    # train loop
     for epoch in range(args.num_train_epochs):
         model.train()
         prev_hidden = None
